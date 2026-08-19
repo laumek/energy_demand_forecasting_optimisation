@@ -1,0 +1,35 @@
+[project]
+name = "energy-demand-forecasting-optimisation"
+version = "0.1.0"
+description = "Energy demand forecasting: LSTM+MRFO baseline vs XGBoost, with MLflow tracking"
+readme = "README.md"
+authors = [
+    { name = "laumek", email = "laureenmekuilm@gmail.com" }
+]
+requires-python = ">=3.11"
+dependencies = [
+    "mlflow>=3.15.1",
+    "numpy>=2.4.6",
+    "pandas>=2.3.3",
+    "pyyaml>=6.0.3",
+    "scikit-learn>=1.9.0",
+    "torch>=2.13.0",
+    "xgboost>=3.2.0",
+]
+
+[project.scripts]
+energy-demand-forecasting-optimisation = "energy_forecast:main"
+
+[build-system]
+requires = ["uv_build>=0.12.5,<0.13.0"]
+build-backend = "uv_build"
+
+[tool.uv.build-backend]
+module-name = "energy_forecast"
+
+[dependency-groups]
+dev = [
+    "black>=26.5.1",
+    "pytest>=9.1.1",
+    "ruff>=0.16.3",
+]
