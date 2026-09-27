@@ -1,6 +1,6 @@
 import pandas as pd
 
-# Interconnectors with 70-90% missing values (only recorded from 2019-2023 onwards)
+# Interconnectors with 66-93% missing values (only recorded from 2019 or 2023 onwards)
 MOSTLY_MISSING_COLUMNS = ["eleclink_flow", "nsl_flow", "scottish_transfer", "viking_flow"]
 # Demand measures that are near-duplicates of the target (nd) by definition
 TARGET_DUPLICATE_COLUMNS = ["tsd", "england_wales_demand"]
