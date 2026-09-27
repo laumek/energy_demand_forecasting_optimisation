@@ -89,3 +89,11 @@ def test_each_subset_is_trained_once(toy_data):
 
     assert len(calls) == len(set(calls))
     assert len(calls) <= result.n_unique_evaluations < len(result.history)
+
+
+def test_objective_splits_into_error_and_penalty_terms(toy_data):
+    alpha = 0.99
+    result = run_mrfo(*toy_data, alpha=alpha)
+
+    assert result.best_error_term + result.best_penalty_term == pytest.approx(result.best_objective)
+    assert result.best_penalty_term == pytest.approx((1 - alpha) * result.best_mask.sum() / N_FEATURES)

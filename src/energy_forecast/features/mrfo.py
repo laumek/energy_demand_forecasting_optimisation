@@ -37,6 +37,10 @@ class SearchResult(NamedTuple):
     best_objective: float
     history: list[float]  # best objective so far after each objective call
     n_unique_evaluations: int  # number of distinct feature subsets actually trained
+    # The two parts of best_objective. If the penalty is more than a small tie-breaker next to
+    # the error term, alpha is too low and MRFO may be dropping genuinely useful features
+    best_error_term: float  # alpha * normalised validation error
+    best_penalty_term: float  # (1 - alpha) * n_selected / n_features
 
 
 def xgboost_fitness_function(features: np.ndarray, X, y) -> float:
@@ -134,6 +138,14 @@ def _make_objective(fitness_function, X, y, alpha, fitness_kwargs):
     return objective, cache, history
 
 
+def _search_result(best_mask, best_score, history, cache, alpha) -> SearchResult:
+    penalty_term = (1 - alpha) * best_mask.sum() / len(best_mask)
+    return SearchResult(
+        best_mask, float(best_score), history, len(cache),
+        best_error_term=float(best_score - penalty_term), best_penalty_term=float(penalty_term),
+    )
+
+
 def _to_mask(position: np.ndarray) -> np.ndarray:
     return (position > 0.5).astype(int)
 
@@ -222,7 +234,7 @@ def manta_ray_foraging_optimization(
                 f"unique subsets evaluated: {len(cache)}"
             )
 
-    return SearchResult(_to_mask(best_position), float(best_score), history, len(cache))
+    return _search_result(_to_mask(best_position), best_score, history, cache, alpha)
 
 
 def random_search(
@@ -257,4 +269,4 @@ def random_search(
             f"features: {best_mask.sum()}/{n_features}, unique subsets evaluated: {len(cache)}"
         )
 
-    return SearchResult(best_mask, float(best_score), history, len(cache))
+    return _search_result(best_mask, best_score, history, cache, alpha)
