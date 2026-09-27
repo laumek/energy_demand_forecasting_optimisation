@@ -60,6 +60,8 @@ def load_city_temperature(city: str, lat: float, lon: float) -> pd.Series:
         raise FileNotFoundError(f"No downloaded files found for {city}")
 
     combined = pd.concat(yearly_series).sort_index()
+    # ERA5 timestamps are UTC
+    combined.index = pd.DatetimeIndex(combined.index).tz_localize("UTC")
     combined = combined - 273.15
     combined.name = city
 
@@ -93,8 +95,9 @@ def build_national_temperature() -> pd.Series:
 
 def merge_with_demand(demand_df: pd.DataFrame) -> pd.DataFrame:
     """Merge the national weighted temperature series into the main demand dataframe,
-    aligned on the datetime index."""
-    national_temp = build_national_temperature()
+    aligned on the datetime index. demand_df must have a tz-aware index (see clean_data);
+    the UTC temperature series is converted to the same timezone before joining."""
+    national_temp = build_national_temperature().tz_convert(demand_df.index.tz)
     merged = demand_df.join(national_temp, how="left")
 
     missing = merged["temperature"].isna().sum()
@@ -113,5 +116,7 @@ if __name__ == "__main__":
 
     PROCESSED_DIR.mkdir(parents=True, exist_ok=True)
     output_path = PROCESSED_DIR / "demand_with_temperature.csv"
-    merged_df.to_csv(output_path)
+    # Saved in UTC: a single offset reads back cleanly with parse_dates (local time would mix
+    # +00:00 and +01:00). Convert to Europe/London after loading where local time matters.
+    merged_df.tz_convert("UTC").to_csv(output_path)
     print(f"Saved merged dataset to {output_path}")
