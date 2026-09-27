@@ -136,38 +136,14 @@ def train_model(model, train_loader, criterion, optimizer, num_epochs=10):
     return model, epoch_losses
 
 
-def get_train_predictions(model, train_loader, y_train, y_scaler, step_size=336):
+def predict_train_set(model, train_loader, y_scaler, batch_size=2048):
     """
-    Return training-set predictions (inverse-scaled) plus mean/first-week/last-week
-    MAE and RMSE. No plotting here — handled by the caller.
+    Inverse-scaled predictions (flat array) for every training window, including the final
+    partial batch that train_loader drops. The first window targets training row
+    seq_length - 1, so prediction i corresponds to training row i + seq_length - 1.
     """
-    train_predictions_inverse = _predict(model, train_loader, y_scaler)
-
-    # The first training window targets y_train[seq_length - 1]
-    y_train_aligned = y_train[train_loader.dataset.seq_length - 1:]
-
-    num_steps = len(train_predictions_inverse)
-    mae_list, rmse_list = [], []
-
-    for i in range(0, num_steps, step_size):
-        end_idx = min(i + step_size, num_steps)
-        actual_segment = y_train_aligned[i:end_idx]
-        pred_segment = train_predictions_inverse[i:end_idx]
-
-        mae_list.append(mean_absolute_error(actual_segment, pred_segment))
-        rmse_list.append(np.sqrt(mean_squared_error(actual_segment, pred_segment)))
-
-    return {
-        "train_predictions": train_predictions_inverse,
-        "mae_mean": np.mean(mae_list),
-        "rmse_mean": np.mean(rmse_list),
-        "mae_first_week": mae_list[0],
-        "rmse_first_week": rmse_list[0],
-        "mae_last_week": mae_list[-1],
-        "rmse_last_week": rmse_list[-1],
-        "mae_list": mae_list,
-        "rmse_list": rmse_list,
-    }
+    loader = DataLoader(train_loader.dataset, batch_size=batch_size, shuffle=False, drop_last=False)
+    return _predict(model, loader, y_scaler).flatten()
 
 
 def _predict(model, loader, y_scaler):
