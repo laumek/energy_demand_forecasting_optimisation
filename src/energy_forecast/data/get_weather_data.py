@@ -1,8 +1,10 @@
+"""
+Download ERA5 2m temperature for each city and year from the Copernicus Climate Data Store.
+Requires a CDS API key (~/.cdsapirc). Run as a script: python -m energy_forecast.data.get_weather_data
+"""
 import time
 from pathlib import Path
 import cdsapi
-
-client = cdsapi.Client()
 
 cities = {
     "london": (51.51, -0.13),
@@ -15,14 +17,11 @@ cities = {
 }
 
 OUTPUT_DIR = Path("data/raw")
-OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
 
 MAX_RETRIES = 3
 RETRY_DELAY_SECONDS = 30
 
-failed_downloads = []
-
-def download_one(city, lat, lon, year):
+def download_one(client, city, lat, lon, year, failed_downloads):
     target = OUTPUT_DIR / f"era5_{city}_{year}.nc"
 
     if target.exists():
@@ -53,13 +52,22 @@ def download_one(city, lat, lon, year):
     failed_downloads.append((city, year))
 
 
-for city, (lat, lon) in cities.items():
-    for year in range(2009, 2025):
-        download_one(city, lat, lon, year)
+def main():
+    OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
+    client = cdsapi.Client()
+    failed_downloads = []
 
-if failed_downloads:
-    print(f"\n{len(failed_downloads)} downloads failed after {MAX_RETRIES} attempts each:")
-    for city, year in failed_downloads:
-        print(f"  - {city} {year}")
-else:
-    print("\nAll downloads completed successfully.")
+    for city, (lat, lon) in cities.items():
+        for year in range(2009, 2025):
+            download_one(client, city, lat, lon, year, failed_downloads)
+
+    if failed_downloads:
+        print(f"\n{len(failed_downloads)} downloads failed after {MAX_RETRIES} attempts each:")
+        for city, year in failed_downloads:
+            print(f"  - {city} {year}")
+    else:
+        print("\nAll downloads completed successfully.")
+
+
+if __name__ == "__main__":
+    main()
