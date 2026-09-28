@@ -235,3 +235,5 @@ data/raw/
 data/processed/
 mlruns/
 mlartifacts/
+# Notebook outputs (saved MRFO/tuning results, local runs)
+outputs/

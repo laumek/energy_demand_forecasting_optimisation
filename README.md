@@ -38,7 +38,10 @@ by `tests/`.
 5. Run the notebooks in order: `01_eda`, `02_feature_engineering` (writes
    `data/processed/model_ready_features_day_ahead.csv`), then `03_model_comparison`.
    Notebook 3 is the slow one: the LSTM MRFO search and LSTM tuning take hours on a CPU;
-   a CUDA GPU is recommended.
+   a CUDA GPU is recommended. It can run on a Google Colab GPU runtime (e.g. from VS Code); see
+   "Running locally or on Colab" at the top of the notebook. Run it once with `SMOKE_TEST = True`
+   first, which finishes in minutes. The MRFO and tuning results are saved under `outputs/` (on
+   Colab, on Google Drive) and reloaded on re-runs.
 6. Run the tests:
    ```
    uv run pytest

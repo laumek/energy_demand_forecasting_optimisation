@@ -43,10 +43,10 @@ class SearchResult(NamedTuple):
     best_penalty_term: float  # (1 - alpha) * n_selected / n_features
 
 
-def xgboost_fitness_function(features: np.ndarray, X, y) -> float:
+def xgboost_fitness_function(features: np.ndarray, X, y, device: str = "cpu") -> float:
     """
     Evaluate a candidate feature subset by training a fast XGBoost model and
-    returning its normalised validation MSE (lower is better).
+    returning its normalised validation MSE (lower is better). device="cuda" trains on the GPU.
     """
     selected_indices = np.where(features == 1)[0]
     if len(selected_indices) == 0:
@@ -64,6 +64,7 @@ def xgboost_fitness_function(features: np.ndarray, X, y) -> float:
         learning_rate=0.1,
         n_jobs=-1,
         random_state=42,
+        device=device,
     )
     model.fit(X_train, y_train)
 
